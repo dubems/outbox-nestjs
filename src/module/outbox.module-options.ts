@@ -18,6 +18,10 @@ export class RabbitMqOptions {
     connectionString: string
 }
 
+
 export class KafkaOptions {
-    //todo: to be implemented
+    clientId: string
+    brokers: string[]
+    topic: string
+    connectionTimeout?: number
 }

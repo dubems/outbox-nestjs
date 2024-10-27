@@ -1,8 +1,36 @@
 import {EventPublisher} from "../../domain/event/EventPublisher";
+import {Message, Producer} from "kafkajs";
+import {Outbox} from "../../domain/entity/outbox";
+import {Builder} from "builder-pattern";
 
+/**
+ * how to handle Kafka broker authentication
+ */
 export class KafkaEventPublisher implements EventPublisher {
-    publishEvents(): Promise<void> {
-        throw new Error("Method not implemented.");
+
+    constructor(private readonly kafkaProducer: Producer,
+                private readonly topic: string) {
     }
-        //TODO; publish to kafka in batches
+
+    public async publishEvents(outboxes: Outbox[]): Promise<void> {
+        await this.kafkaProducer.sendBatch({
+            topicMessages: [{
+                topic: this.topic,
+                messages: KafkaEventPublisher.toKafkaMessage(outboxes)
+            }]
+        })
+        // await this.kafkaProducer.send({
+        //     topic: this.topic,
+        //     messages: KafkaEventPublisher.toKafkaMessage(outboxes)
+        // })
+    }
+
+    private static toKafkaMessage(outboxes: Outbox[]): Message[] {
+        return outboxes.map((o) =>
+            Builder<Message>()
+                .key(o.aggregateId)
+                .value(o.messagePayload)
+                .build()
+        )
+    }
 }

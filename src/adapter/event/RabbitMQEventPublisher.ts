@@ -10,8 +10,6 @@ export class RabbitMQEventPublisher implements EventPublisher {
     constructor(private readonly publisher: Publisher) {
     }
 
-    //how do i retry each item
-    //configure retires on the publisher itself
     public async publishEvents(outboxItems: Outbox[]): Promise<void> {
         for (const outbox of outboxItems) {
             //todo: publish this is parallel
