@@ -1,15 +1,15 @@
-import {EventPublisher} from "../domain/event/EventPublisher";
-import {OutboxProvider} from "../domain/provider/OutboxProvider";
-import {Inject, Injectable, Logger, OnApplicationShutdown, OnModuleInit} from "@nestjs/common";
-import {MessageQueueType, OutboxModuleOptions} from "./outbox.module-options";
-import {Connection, Publisher} from "rabbitmq-client";
-import {RabbitMQEventPublisher} from "../adapter/event/RabbitMQEventPublisher";
-import {TypeOrmProvider} from "../adapter/provider/TypeOrmProvider";
-import {Cron, CronExpression} from "@nestjs/schedule";
-import {QueryRunner} from "typeorm";
-import {Kafka, Producer, RetryOptions} from "kafkajs";
-import {KafkaEventPublisher} from "../adapter/event/KafkaEventPublisher";
-import {RuntimeException} from "@nestjs/core/errors/exceptions";
+import { EventPublisher } from "../domain/event/EventPublisher";
+import { OutboxProvider } from "../domain/provider/OutboxProvider";
+import { Inject, Injectable, Logger, OnApplicationShutdown, OnModuleInit } from "@nestjs/common";
+import { MessageQueueType, OutboxModuleOptions } from "./outbox.module-options";
+import { Connection, Publisher } from "rabbitmq-client";
+import { RabbitMQEventPublisher } from "../adapter/event/RabbitMQEventPublisher";
+import { TypeOrmProvider } from "../adapter/provider/TypeOrmProvider";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { QueryRunner } from "typeorm";
+import { Kafka, Producer, RetryOptions } from "kafkajs";
+import { KafkaEventPublisher } from "../adapter/event/KafkaEventPublisher";
+import { RuntimeException } from "@nestjs/core/errors/exceptions";
 
 @Injectable()
 export class OutboxProcessor implements OnModuleInit, OnApplicationShutdown {
@@ -105,7 +105,7 @@ export class OutboxProcessor implements OnModuleInit, OnApplicationShutdown {
             // Enable retries
             maxAttempts: 2,
             // Optionally ensure the existence of an exchange before we use it
-            exchanges: [{exchange: exchange}]
+            exchanges: [{ exchange: exchange }]
         })
 
         if (this.rabbitConnection.ready) {
@@ -121,14 +121,12 @@ export class OutboxProcessor implements OnModuleInit, OnApplicationShutdown {
             brokers: this.options.kafkaOptions.brokers
         })
 
-
-        const retryOptions = {maxRetryTime: 15000} as RetryOptions
-        this.kafkaProducer = kafka.producer({retry: retryOptions})
+        const retryOptions = { maxRetryTime: 15000 } as RetryOptions
+        this.kafkaProducer = kafka.producer({ retry: retryOptions })
         await this.kafkaProducer.connect()
 
         const kafkaTopic = this.options.kafkaOptions.topic
         this.eventPublisher = new KafkaEventPublisher(this.kafkaProducer, kafkaTopic)
-        this.log.debug(`Is this code getting here ?`)
     }
 
     /** todo: change this to dynamic interval so clients can configure it
@@ -140,7 +138,7 @@ export class OutboxProcessor implements OnModuleInit, OnApplicationShutdown {
         //todo: validate entitymanager, queryRunner,
 
         this.log.debug("Polling publisher started...")
-        await this.queryRunner.startTransaction("SERIALIZABLE")
+        await this.queryRunner.startTransaction()
 
         try {
             let outboxes = await this.outboxProvider.fetchRecords()
