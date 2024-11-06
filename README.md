@@ -14,13 +14,16 @@ npm install outbox-nestjs -s
 
 ### Context
 
-Outbox pattern gaurantees data consistency for services that, as part of a business process, needs to persist an entity
+Outbox pattern guarantees data consistency for services that, as part of a business process, needs to persist an entity
 and also publish and event/message to a broker.
 
 To achieve this, the message is stored in the database as part of the
-transaction that updates the business entities. A separate process then sends the messages to the message broker
+transaction that updates the business entities. A separate process then sends the messages to the message broker. This
+library implements this using the polling publisher pattern
 
 The message that is persisted in the database is called the `Outbox` entity which looks like below
+
+#### Outbox Entity
 
 ```typescript
 @Entity()
@@ -44,27 +47,33 @@ export class Outbox {
 
 ```
 
+| Outbox Entity Properties | Meaning                                                                                         |
+|--------------------------|-------------------------------------------------------------------------------------------------|
+| `id`                     | UUID primary key for the outbox entity                                                          |
+| `aggregateId`            | This represents the Id of the aggregate. i:e entity that's is being saved along with the outbox |
+| `messagePayload`         | Message payload to be published. Should be in JSON string format                                |
+| `eventType`              | This represents the type of event. i:e `OrderProcessedEvent`                                    |
+| `createdAt`              | When the event was created. Event are published in reverse chronological order                  |
+
 ### Configuration
 
-* Outbox entity
-* Outbox entity migration
-*
-
-### App Module configuration
+#### App Module configuration
 
 In your NestJs application, navigate the `app.module.ts` and make the following configuration. The configuration is
 divided into two
 
+* Kafka Publisher configuration
+* RabbitMQ configuration
+
+However, regardless of the event queue, there are two common configuration properties as can be seen below
 
 | OutboxModule Properties | Meaning                                                                                          |
 |-------------------------|--------------------------------------------------------------------------------------------------|
 | `queueType`             | The type of message queue to publish the message. This can either **KAFKA** or **RABBITMQ**      |
 | `datasource`            | This is the datasource configured for your application for connecting to the underlying database |
 
-* Kafka Publisher configuration
-* RabbitMQ configuration
-
 #### Kafka Publisher Configuration
+
 If you will be publishing to Kafka, your configuration should look something like this below. We are going to add the
 `OutboxModule` in the imports section of the` @Module`
 
@@ -83,18 +92,16 @@ imports: [
 ]
 ````
 
-
 | Kafka Options Properties | Meaning                                                                   |
 |--------------------------|---------------------------------------------------------------------------|
 | `clientId`               | This is the name of your service or whatever you want to call your client |
 | `brokers`                | This the broker url(s). Supports an array for multiple brokers            |
 | `topic`                  | The topic name to send your messages to                                   |
 
-
 #### RabbitMQ Configuration
 
-If you will be publishing to Kafka, your configuration should look something like this below. We are going to add the
-`OutboxModule` in the imports section of the` @Module`
+If you are using RabbitMQ, your configuration should look something like this below. We are going to add the
+`OutboxModule` in the imports section of the `@Module`
 
 ````typescript
 
@@ -110,12 +117,56 @@ imports: [
 ]
 ````
 
-
 | Kafka Options Properties | Meaning                                                  |
 |--------------------------|----------------------------------------------------------|
 | `exchange`               | This is the rabbitMQ exchange to message publishing      |
 | `connectionString`       | This is the connection string for connecting to rabbitMQ |
 
+#### Datasource Configuration
 
-#### Datasource configuration
+This library requires a datasource inorder to fetch data from the outbox table. Typically, your datasource configuration
+would look something like below
+
+```typescript
+const config: TypeOrmModuleOptions = {
+    type: "xxxx",
+    host: `xxx`,
+    port: xxxx,
+    username: `xxxx`,
+    password: `xxxx`,
+    database: `xxxx`,
+    entities: [`xxx`, Outbox],
+    migrationsRun: true,
+    migrations: ["dist/domain/migrations/*{.ts,.js}"],
+    autoLoadEntities: true,
+    synchronize: true,
+    logger: "advanced-console"
+};
+
+```
+
+**The important part of the above configuration is that we have to add the `Outbox` entity to the entities array**
+
+### Database Migrations
+
+The Typeorm configuration from above has `synchronize:true`, which would create the `Outbox` table in the database,
+however,
+**DO NOT USE THIS IN PRODUCTION!!!**
+
+_You should create the Outbox table in your database, choosing the right data type for each property_
+
+## Other  Considerations
+There are some details to be aware of when using this library
+
+* The default polling interval is **1 Second** for now
+* This library would try to publish the events at least once. However, there can be cases where an event is published more than once.  
+Your clients should be **Idempotent**
+* While the implementation tries to publish the events in order which they arrive, the order may not be guaranteed ;)
+
+
+### Author
+Nriagu Chidubem
+
+
+
 
