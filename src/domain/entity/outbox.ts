@@ -3,18 +3,18 @@ import {Column, CreateDateColumn, Entity, PrimaryGeneratedColumn} from "typeorm"
 @Entity()
 export class Outbox {
 
-    @PrimaryGeneratedColumn(`uuid`)
-    id: string;
+   @PrimaryGeneratedColumn(`uuid`)
+   id: string;
 
-    @Column()
-    aggregateId: string
+   @Column()
+   aggregateId: string
 
-    @Column()
-    messagePayload: string
+   @Column()
+   messagePayload: string
 
-    @Column()
-    eventType: string
+   @Column()
+   eventType: string
 
-    @CreateDateColumn()
-    createdAt: Date
+   @CreateDateColumn()
+   createdAt: Date
 }

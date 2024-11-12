@@ -2,7 +2,7 @@ import {Outbox} from "../entity/outbox";
 
 export interface OutboxProvider {
 
-    fetchRecords(): Promise<Outbox[]>
+   fetchRecords(): Promise<Outbox[]>
 
-    deleteRecords(outboxes: Outbox[]): Promise<void>
+   deleteRecords(outboxes: Outbox[]): Promise<void>
 }

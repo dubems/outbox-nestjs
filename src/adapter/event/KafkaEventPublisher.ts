@@ -8,29 +8,25 @@ import {Builder} from "builder-pattern";
  */
 export class KafkaEventPublisher implements EventPublisher {
 
-    constructor(private readonly kafkaProducer: Producer,
-                private readonly topic: string) {
-    }
+   constructor(private readonly kafkaProducer: Producer,
+               private readonly topic: string) {
+   }
 
-    public async publishEvents(outboxes: Outbox[]): Promise<void> {
-        await this.kafkaProducer.sendBatch({
-            topicMessages: [{
-                topic: this.topic,
-                messages: KafkaEventPublisher.toKafkaMessage(outboxes)
-            }]
-        })
-        // await this.kafkaProducer.send({
-        //     topic: this.topic,
-        //     messages: KafkaEventPublisher.toKafkaMessage(outboxes)
-        // })
-    }
+   public async publishEvents(outboxes: Outbox[]): Promise<void> {
+      await this.kafkaProducer.sendBatch({
+         topicMessages: [{
+            topic: this.topic,
+            messages: KafkaEventPublisher.toKafkaMessage(outboxes)
+         }]
+      })
+   }
 
-    private static toKafkaMessage(outboxes: Outbox[]): Message[] {
-        return outboxes.map((o) =>
-            Builder<Message>()
-                .key(o.aggregateId)
-                .value(o.messagePayload)
-                .build()
-        )
-    }
+   private static toKafkaMessage(outboxes: Outbox[]): Message[] {
+      return outboxes.map((o) =>
+          Builder<Message>()
+          .key(o.aggregateId)
+          .value(o.messagePayload)
+          .build()
+      )
+   }
 }
